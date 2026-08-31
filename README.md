@@ -1,30 +1,26 @@
-# <Project Name>
-
-> Replace every angle-bracket placeholder below. The hygiene check in CI will
-> fail until you do.
+# PUPIL
 
 ## Author
 
 | Roll No. | Name | GitHub username |
 |---|---|---|
-| <roll> | <name> | <username> |
+| 24ESKCS087 | Bhavya Gupta | PRITHVIBO |
 
 ## About
 
-<Two or three sentences on what this application does.>
+PUPIL is an educational platform that provides students with a centralized place to explore learning resources and technology-related topics. The application includes sections covering areas such as AI/ML, Cloud, DevOps, DSA, System Design, and Web Development.
 
 ## Tech stack
 
-- Frontend: <e.g. React>
-- Backend: <e.g. Node.js / Express>
-- Database: <e.g. PostgreSQL>
+- Frontend: HTML5, CSS3, JavaScript
+- Backend: None
+- Database: None
 
 ## Running locally
 
 ```bash
 make install
 make run
-```
 
 ## Live URL
 
