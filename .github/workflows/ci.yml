@@ -1,87 +1,76 @@
-name: PUPIL CI and Deploy
+name: CI
 
 on:
   push:
-    branches:
-      - main
-
   pull_request:
-    branches:
-      - main
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  validate:
-    name: Validate and Build PUPIL
+  # ---------------------------------------------------------------------------
+  # Given to you. Do not delete this job.
+  # ---------------------------------------------------------------------------
+  hygiene:
+    name: Repository hygiene
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify project files
-        run: |
-          test -f index.html
-          test -d CSS
-          test -d js
-          test -d images
-          echo "PUPIL project structure is valid."
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version: 22
+          fetch-depth: 0
+      - name: Run hygiene checks
+        run: bash scripts/hygiene.sh
 
-      - name: Initialize npm
-        run: npm init -y
+  # ---------------------------------------------------------------------------
+  # M3 — YOUR WORK STARTS HERE.
+  #
+  # Uncomment the job below and make it pass. Fill in the Makefile targets for
+  # your stack; do not change the target names, because this file calls them.
+  #
+  # The pipeline must genuinely fail when your tests fail. Do not add
+  # continue-on-error or "|| true" to make it green.
+  # ---------------------------------------------------------------------------
 
-      - name: Install HTML validator
-        run: npm install --save-dev html-validate
+  # build-and-test:
+  #   name: Build and test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     # Set up whichever runtime you need, for example:
+  #     # - uses: actions/setup-node@v4
+  #     #   with: { node-version: '20', cache: 'npm' }
+  #     # - uses: actions/setup-python@v5
+  #     #   with: { python-version: '3.12' }
+  #
+  #     - run: make install
+  #     - run: make test
+  #     - run: make build
 
-      - name: Validate HTML
-        run: npx html-validate "*.html"
+  # ---------------------------------------------------------------------------
+  # M4 — Containerization. Uncomment and complete when you get there.
+  # The push to the registry is what proves your build actually ran, so it is
+  # not optional.
+  # ---------------------------------------------------------------------------
 
-      - name: Build project
-        run: |
-          mkdir -p build
-          cp *.html build/
-          cp -r CSS build/
-          cp -r js build/
-          cp -r images build/
-          echo "Build completed successfully."
+  # docker:
+  #   name: Build and push images
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./backend
+  #         push: true
+  #         tags: ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+  #     # ... and the same for ./frontend
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pupil-build
-          path: build/
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: validate
-    runs-on: ubuntu-latest
-
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pupil-build
-          path: build
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: build
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  # ---------------------------------------------------------------------------
+  # M5 — Deployment. Add a deploy job here.
+  # ---------------------------------------------------------------------------
