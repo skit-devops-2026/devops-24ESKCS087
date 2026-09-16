@@ -19,7 +19,7 @@ test:
 build:
 	@echo "Validating static website files..."
 	test -f index.html
-	test -d css
+	test -d CSS
 	test -d js
 	@echo "Build validation passed"
 

@@ -28,14 +28,14 @@ jobs:
   # continue-on-error or "|| true" to make it green.
   # ---------------------------------------------------------------------------
 
-  # build-and-test:
-  #   name: Build and test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - run: make install
-  #     - run: make test
-  #     - run: make build
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make install
+      - run: make test
+      - run: make build
 
   # ---------------------------------------------------------------------------
   # M4 — Containerization. Uncomment and complete when you get there.
