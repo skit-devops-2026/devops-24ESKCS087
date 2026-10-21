@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    server_tokens off;
+
+    location = /health {
+        default_type application/json;
+        add_header Cache-Control "no-store";
+        return 200 '{"status":"ok","commit":"${APP_COMMIT}"}';
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+# Exporter-only metrics listener; Compose does not publish 8081 on the host.
+server {
+    listen 8081;
+    server_name _;
+
+    location = /stub_status {
+        stub_status;
+        access_log off;
+    }
+
+    location / {
+        return 404;
+    }
+}

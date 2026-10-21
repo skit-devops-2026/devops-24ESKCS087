@@ -1,0 +1,99 @@
+name: Deploy PUPIL to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "monitoring/**"
+      - "k8s/**"
+      - "README.md"
+      - "Makefile"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Prepare static site and health endpoint
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp ./*.html dist/
+          cp -r CSS js images dist/
+          cp favicon.ico favicon.svg dist/
+          printf '{"status":"ok","commit":"%s"}\n' "$GITHUB_SHA" > dist/health
+          touch dist/.nojekyll
+          test -f dist/index.html
+          test -f dist/CSS/style.css
+          test -f dist/health
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  capture-evidence:
+    runs-on: ubuntu-latest
+    needs: deploy
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capture verified live website screenshot
+        env:
+          SITE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          mkdir -p docs
+          node .github/scripts/capture-live-site.mjs "$SITE_URL" docs/deployment-screenshot.png
+      - name: Preserve screenshot as a workflow artifact too
+        uses: actions/upload-artifact@v4
+        with:
+          name: pupil-live-deployment-screenshot
+          path: docs/deployment-screenshot.png
+          if-no-files-found: error
+      - name: Commit screenshot under docs
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/deployment-screenshot.png
+          if git diff --cached --quiet; then
+            echo "Deployment screenshot is unchanged."
+            exit 0
+          fi
+          git commit -m "docs: capture live PUPIL deployment screenshot"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
