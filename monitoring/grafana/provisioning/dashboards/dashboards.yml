@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: PUPIL dashboards
+    orgId: 1
+    folder: PUPIL
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

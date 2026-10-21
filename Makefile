@@ -1,12 +1,6 @@
-# Every team fills in the commands for their own stack.
-# The CI pipeline calls these targets, so the names must not change.
-#
-# Examples:
-#   Node    install: npm ci          test: npm test        build: npm run build
-#   Python  install: pip install -r requirements.txt
-#                                    test: pytest          build: echo "no build step"
-#   Java    install: ./mvnw -B dependency:go-offline
-#                                    test: ./mvnw test     build: ./mvnw package
+# Targets are used by repository CI; keep their names stable.
+IMAGE_NAME ?= ghcr.io/skit-devops-2026/devops-24eskcs087
+GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo local)
 
 .PHONY: install test build run docker-build docker-up
 
@@ -17,18 +11,25 @@ test:
 	bash tests/test_site.sh
 
 build:
-	@echo "Validating static website files..."
+	@echo "Validating static website and M5â€“M7 files..."
 	test -f index.html
 	test -d CSS
+	test -f CSS/style.css
 	test -d js
+	test -f js/script.js
+	test -f Dockerfile
+	test -f docker-compose.yml
+	test -f monitoring/prometheus.yml
+	test -f monitoring/grafana/dashboards/pupil-nginx-overview.json
+	test -f k8s/deployment.yaml
+	test -f k8s/service.yaml
 	@echo "Build validation passed"
 
 run:
 	@echo "Open index.html in a web browser"
 
-# Needed from M4 onwards
 docker-build:
-	@echo "TODO: docker build for frontend and backend" && exit 1
+	docker build --build-arg GIT_COMMIT=$(GIT_COMMIT) -t $(IMAGE_NAME):local .
 
 docker-up:
 	docker compose up --build
